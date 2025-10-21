@@ -7,6 +7,8 @@
 
 // Data/AudioPlayerClient.swift
 import AVFoundation
+import ComposableArchitecture
+
 
 public struct AudioPlayerClient: Sendable {
     public var preload:     @Sendable (_ hymnNumber: Int) async -> Bool
@@ -17,6 +19,41 @@ public struct AudioPlayerClient: Sendable {
     public var duration:    @Sendable () async -> TimeInterval
     public var currentTime: @Sendable () async -> TimeInterval
     public var seek:        @Sendable (_ time: TimeInterval) async -> Void
+}
+
+public extension AudioPlayerClient {
+    // 기존 live() 대신 shared()를 제공
+    static func shared(bundle: Bundle = .main) -> AudioPlayerClient {
+        // 전역 공유 엔진
+        struct Holder { static let engine = AudioEngine() }
+        let engine = Holder.engine
+        return .init(
+            preload:     { n in await engine.preload(hymnNumber: n, bundle: bundle) },
+            play:        { await engine.play() },
+            pause:       { await engine.pause() },
+            stop:        { await engine.stop() },
+            isPlaying:   { await engine.isPlaying() },
+            duration:    { await engine.duration() },
+            currentTime: { await engine.currentTime() },
+            seek:        { t in await engine.seek(to: t) }
+        )
+    }
+}
+
+private enum AudioClientKey: DependencyKey {
+  // 🔒 반드시 "공유 엔진"을 사용해서 모든 곳이 같은 인스턴스를 보게 한다
+  static let liveValue: AudioPlayerClient = .shared()  // <- 아래 구현 참고
+  static let testValue: AudioPlayerClient = .init(
+    preload: { _ in false }, play: {}, pause: {}, stop: {},
+    isPlaying: { false }, duration: { 0 }, currentTime: { 0 }, seek: { _ in }
+  )
+}
+
+public extension DependencyValues {
+  var audio: AudioPlayerClient {
+    get { self[AudioClientKey.self] }
+    set { self[AudioClientKey.self] = newValue }
+  }
 }
 
 actor AudioEngine {
@@ -49,6 +86,7 @@ actor AudioEngine {
                 let p = try AVAudioPlayer(data: data)
                 p.prepareToPlay()
                 self.player = p
+                print("audio log preload player load!!! \(self.player == nil ? "nil" : "ok")")
                 return true
             } catch {
                 continue
@@ -56,10 +94,17 @@ actor AudioEngine {
         }
         
         self.player = nil
+        print("audio log preload player nil!!!")
         return false
     }
     
-    func play()  async { player?.play() }
+    func play()  async {
+        if let player = player {
+            player.play()
+        } else {
+            print("audio log play player nil!!!")
+        }
+    }
     func pause() async { player?.pause() }
     func stop()  async { player?.stop(); player?.currentTime = 0 }
     func isPlaying() async -> Bool { player?.isPlaying ?? false }

@@ -52,11 +52,14 @@ struct AudioBottomSheetView: View {
                     
                     Button { vs.send(.stop) } label: {
                         Image(systemName: "stop.circle")
-                            .font(.system(size: 24))
+                            .font(.system(size: 36))
                     }
                 }
             }
             .padding(16)
+            .onDisappear {
+                vs.send(.stop) // 화면이 닫히면 재생도 멈춘다.
+            }
         }
     }
 }
