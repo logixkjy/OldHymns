@@ -43,7 +43,7 @@ struct HymnDetailView: View {
                         ZStack {
                             // 악보(줌)
                             if let img = vs.scoreImage {
-                                ZoomableImage(img: img)
+                                ZoomableImage(image: img)
                                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                                 
 //                                GeometryReader { geo in

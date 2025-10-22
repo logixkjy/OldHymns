@@ -42,7 +42,7 @@ struct HistoryDetailView: View {
                         ZStack {
                             // 악보(줌)
                             if let img = vs.scoreImage {
-                                ZoomableImage(img: img)
+                                ZoomableImage(image: img)
                                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                             } else {
                                 VStack { Spacer(); Text("악보 이미지가 없습니다.").foregroundStyle(.secondary); Spacer() }
