@@ -12,6 +12,7 @@ import ComposableArchitecture
 
 // 파일 최상단(어떤 @MainActor 타입/구역 밖)
 private let audioTimerID: String = "HymnDetail.audioTimerID"
+private let CancelID: String = "HymnsOrientationID"
 
 @Reducer
 struct HymnsFeature {
@@ -21,6 +22,8 @@ struct HymnsFeature {
     struct State: Equatable {
         var query: String = ""
         var results: [Hymn] = []
+        
+        var isLandscape: Bool = false
         
         // 상세 화면
         var hymn: Hymn = Hymn(number: 0, title: "", words: "", bookmark: false, img: "", youtubeId: 0)
@@ -48,6 +51,11 @@ struct HymnsFeature {
         case setQuery(String)
         case search
         case select(Hymn)
+        
+        // 🔹 회전 감시
+        case startObserveOrientation
+        case stopObserveOrientation
+        case orientationChanged(Bool)
         
         // 상세
         case onAppear
@@ -79,11 +87,29 @@ struct HymnsFeature {
     }
     @Dependency(\.hymnRepo) var hymnRepo
     @Dependency(\.audio) var audio
+    @Dependency(\.orientation) var orientation
     
     var body: some Reducer<State, Action> {
         BindingReducer()
         Reduce { state, action in
             switch action {
+                // --- 회전 감시 ---
+            case .startObserveOrientation:
+                return .run { send in
+                    for await v in await orientation.changes() {
+                        await send(.orientationChanged(v))
+                    }
+                }
+                .cancellable(id: CancelID, cancelInFlight: true)
+                
+            case .stopObserveOrientation:
+                return .cancel(id: CancelID)
+                
+            case .orientationChanged(let isLand):
+                state.isLandscape = isLand
+                return .none
+                
+                
             case .setQuery(let value):
                 state.query = value
                 return .run { send in

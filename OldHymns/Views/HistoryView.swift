@@ -22,9 +22,7 @@ struct HistoryView: View {
                 }
                 .listStyle(.plain)
                 
-                BannerAdView()
-                    .frame(height: 50)
-                    .background(.ultraThinMaterial)
+                BannerSlot()
             }
             .onAppear {
                 vs.send(.onAppear)

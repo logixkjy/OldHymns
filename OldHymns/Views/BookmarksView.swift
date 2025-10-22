@@ -20,9 +20,7 @@ struct BookmarksView: View {
                 }
                 .listStyle(.plain)
                 
-                BannerAdView()
-                    .frame(height: 50)
-                    .background(.ultraThinMaterial)
+                BannerSlot()
             }
             .onAppear {
                 vs.send(.onAppear)
@@ -52,7 +50,9 @@ private struct BookmarkHymnCell: View {
                     Text(h.title).font(.headline)
                 }
                 Text(h.words.replacingOccurrences(of: ":", with: " "))
-                    .lineLimit(1).foregroundStyle(.secondary)
+                    .lineLimit(1)
+                    .truncationMode(.tail)
+                    .foregroundStyle(.secondary)
             }
         }
     }
