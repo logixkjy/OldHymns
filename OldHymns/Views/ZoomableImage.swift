@@ -28,50 +28,74 @@ struct ZoomableImage: UIViewRepresentable {
         scroll.contentInsetAdjustmentBehavior = .never
         
         let iv = context.coordinator.imageView
-//        iv.image = image
-//        iv.contentMode = .scaleAspectFit
         iv.isUserInteractionEnabled = true
         iv.translatesAutoresizingMaskIntoConstraints = true
-//        iv.frame = CGRect(origin: .zero, size: image.size)
         
         scroll.addSubview(iv)
-//        scroll.contentSize = image.size
         
         let doubleTap = UITapGestureRecognizer(target: context.coordinator,
                                                action: #selector(Coordinator.handleDoubleTap(_:)))
         doubleTap.numberOfTapsRequired = 2
         scroll.addGestureRecognizer(doubleTap)
         
-//        context.coordinator.configureZoom(scroll: scroll, image: image, force: true)
+        context.coordinator.scrollView = scroll
+        context.coordinator.startOrientationNotifications()
         
         return scroll
     }
     
     func updateUIView(_ scroll: UIScrollView, context: Context) {
-        let co = context.coordinator
-        
-        co.replaceImage(image, in: scroll)
-//        if context.coordinator.imageView.image !== image {
-//            context.coordinator.imageView.image = image
-//            context.coordinator.imageView.frame = CGRect(origin: .zero, size: image.size)
-//            scroll.contentSize = image.size
-//            context.coordinator.configureZoom(scroll: scroll, image: image, force: true)
-//        } else {
-//            context.coordinator.configureZoom(scroll: scroll, image: image, force: true)
-//        }
+        context.coordinator.replaceImage(image, in: scroll)
     }
     
     class Coordinator: NSObject, UIScrollViewDelegate {
+        weak var scrollView: UIScrollView?
         var imageView = UIImageView()
-//        private var lastBoundsSize: CGSize = .zero
         private(set) var minScale: CGFloat = 1.0
         private(set) var maxScale: CGFloat = 1.0
-//        private var isIninitialApplied: Bool = false
         private var didInit = false
         private var topAligned: Bool
         
+        private var isGenerating = false
+        
         init(topAligned: Bool) {
             self.topAligned = topAligned
+        }
+        
+        deinit {
+            stopOrientationNotifications()
+        }
+        
+        func startOrientationNotifications() {
+            guard !isGenerating else { return }
+            UIDevice.current.beginGeneratingDeviceOrientationNotifications()
+            NotificationCenter.default.addObserver(self,
+                                                   selector: #selector(handleOrientationChange),
+                                                   name: UIDevice.orientationDidChangeNotification,
+                                                   object: nil)
+            isGenerating = true
+        }
+        
+        func stopOrientationNotifications() {
+            if isGenerating {
+                NotificationCenter.default.removeObserver(self, name: UIDevice.orientationDidChangeNotification, object: nil)
+                UIDevice.current.endGeneratingDeviceOrientationNotifications()
+                isGenerating = false
+            }
+        }
+        
+        @objc private func handleOrientationChange() {
+            // 기기 방향 노티는 UI 회전과 정확히 일치하지 않을 수 있으니,
+            // 다음 런루프(혹은 한 프레임 뒤)에 재계산하여 레이아웃이 안정된 뒤 처리
+            DispatchQueue.main.async { [weak self] in
+                guard let self = self, let scroll = self.scrollView, let img = imageView.image else { return }
+                
+                let height = (scroll.bounds.size.width * img.size.height) / img.size.width
+                imageView.frame = CGRect(origin: .zero, size: CGSize(width: scroll.bounds.size.width, height: height))
+                scroll.contentSize = imageView.bounds.size
+                
+                self.configureZoomAfterLayout(scroll: scroll)
+            }
         }
         
         private func fixedOrientation(_ image: UIImage) -> UIImage {
@@ -84,15 +108,22 @@ struct ZoomableImage: UIViewRepresentable {
         }
         
         func replaceImage(_ newImage: UIImage, in scroll: UIScrollView) {
+            guard scroll.bounds.width > 0, scroll.bounds.height > 0 else {
+                DispatchQueue.main.async { [weak self, weak scroll] in
+                    guard let self, let scroll = scroll else { return }
+                    self.replaceImage(newImage, in: scroll)
+                }
+                return
+            }
+            
             let img = fixedOrientation(newImage)
             
-            // 1) 이미지뷰 프레임 리셋 (프레임 기반)
             imageView.image = img
             imageView.translatesAutoresizingMaskIntoConstraints = true
-            imageView.frame = CGRect(origin: .zero, size: img.size)
+            let height = (scroll.bounds.size.width * img.size.height) / img.size.width
+            imageView.frame = CGRect(origin: .zero, size: CGSize(width: scroll.bounds.size.width, height: height))
             scroll.contentSize = imageView.bounds.size
             
-            // 2) 레이아웃이 안정된 “다음 프레임”에서 재계산
             DispatchQueue.main.async { [weak self, weak scroll] in
                 guard let self, let scroll = scroll else { return }
                 self.configureZoomAfterLayout(scroll: scroll)
@@ -100,7 +131,6 @@ struct ZoomableImage: UIViewRepresentable {
         }
         
         private func configureZoomAfterLayout(scroll: UIScrollView) {
-            // bounds가 0이면 한 프레임 더 미룸
             guard scroll.bounds.width > 0, scroll.bounds.height > 0 else {
                 DispatchQueue.main.async { [weak self, weak scroll] in
                     guard let self, let scroll = scroll else { return }
@@ -118,10 +148,10 @@ struct ZoomableImage: UIViewRepresentable {
             let yScale = bounds.height / base.height
             let yScale2 = max((bounds.height / base.height), 0.85)
             let newMin = (xScale > yScale) ? yScale : xScale
+            let newMax = 2.0
             let viewZoom = (xScale > yScale2) ? yScale2 : xScale
-            
-//            let newMin = min(bounds.width / base.width, bounds.height / base.height)
-            let newMax = max(newMin * 6, 4)
+            print("testLog bounds \(bounds), base \(base)")
+            print("testLog min \(newMin), max \(newMax), view \(viewZoom)")
             
             scroll.minimumZoomScale = newMin
             scroll.maximumZoomScale = newMax
@@ -129,96 +159,16 @@ struct ZoomableImage: UIViewRepresentable {
             maxScale = newMax
             
             // 화면 맞춤
-            scroll.setZoomScale(viewZoom, animated: false)
-            centerOrTopAlign(scroll: scroll)  // ← 인셋 + 오프셋 동시 보정
+            scroll.setZoomScale(1, animated: false)
+            centerOrTopAlign(scroll: scroll)
             didInit = true
         }
-
-        
-//        func configureZoom(scroll: UIScrollView, image: UIImage, force: Bool) {
-//            let boundsSize = scroll.bounds.size
-//            let imageSize = image.size
-//            guard boundsSize.width > 0, boundsSize.height > 0 else {
-//                DispatchQueue.main.asyncAfter(deadline: .now() + 0.01) {
-//                    self.configureZoom(scroll: scroll, image: image, force: force)
-//                }
-//                return
-//            }
-//            
-//            if !force && boundsSize == lastBoundsSize { return }
-//            lastBoundsSize = boundsSize
-//            
-//            let xScale = boundsSize.width / imageSize.width
-//            let yScale = boundsSize.height / imageSize.height
-//            let yScale2 = max((boundsSize.height / imageSize.height), 0.85)
-//            let newMinScale = (xScale > yScale) ? yScale : xScale
-//            let viewZoomScale = (xScale > yScale2) ? yScale2 : xScale
-//            
-//            let newMaxScale = max(newMinScale * 6, 4)
-//            print("boundsLog imageSize W \(imageSize.width) zoom \(viewZoomScale) \(imageSize.width * viewZoomScale) boundsW \(boundsSize.width)")
-//            
-//            DispatchQueue.main.asyncAfter(deadline: .now() + 0.01) {
-//                scroll.minimumZoomScale = newMinScale
-//                scroll.maximumZoomScale = newMaxScale
-//                scroll.setZoomScale(viewZoomScale, animated: false)
-//                self.centerOrTopAlign(scroll: scroll)
-//            }
-//            minScale = newMinScale
-//            maxScale = newMaxScale
-//            
-////            if !isIninitialApplied || force {
-////                scroll.zoomScale = viewZoomScale
-////                isIninitialApplied = true
-////            } else if scroll.zoomScale < minScale {
-////                scroll.setZoomScale(minScale, animated: false)
-////            }
-//            
-//        }
-        
-//        func centerOrTopAlign(scroll: UIScrollView) {
-//            let boundsSize = scroll.bounds.size
-//            let ivSize = imageView.bounds.size
-//            let contentW = ivSize.width * scroll.zoomScale
-//            let contentH = ivSize.height * scroll.zoomScale
-//            var inset = UIEdgeInsets.zero
-//            
-//            if contentW < boundsSize.width {
-//                let pad = (boundsSize.width - contentW) * 0.5
-//                inset.left = pad
-//                inset.right = pad
-//            }
-//            
-////            if topAligned {
-//                inset.top = 0
-//                inset.bottom = max(0, boundsSize.height - contentH)
-////            } else {
-////                if contentH < boundsSize.height {
-////                    let pad = (boundsSize.height - contentH) * 0.5
-////                    inset.top = pad
-////                    inset.bottom = pad
-////                }
-////            }
-//            
-//            scroll.contentInset = inset
-//            scroll.scrollIndicatorInsets = inset
-//
-//            // !! 핵심: 인셋에 맞춰 오프셋도 보정해야 함
-//            // 인셋을 주면 '보이는 원점'은 -inset 이 되어야 중앙이 정확히 맞음.
-//            let targetOffset = CGPoint(x: -inset.left, y: -inset.top)
-//
-//            // 레이아웃이 안정된 다음 프레임에 세팅해야 튐/무시 방지
-//            DispatchQueue.main.async {
-//                // overscroll clamp를 피하려면 contentSize도 최신이어야 함
-//                // (줌 중에는 시스템이 contentSize를 갱신해 줍니다)
-//                scroll.setContentOffset(targetOffset, animated: false)
-//            }
-//        }
         
         @objc func handleDoubleTap(_ gr: UITapGestureRecognizer) {
             guard let scroll = gr.view as? UIScrollView else { return }
             let point = gr.location(in: imageView)
             if abs(scroll.zoomScale - minScale) < 0.001 {
-                let target = min(scroll.zoomScale * 2, maxScale)
+                let target = min(scroll.zoomScale * 3, maxScale)
                 let w = scroll.bounds.width / target
                 let h = scroll.bounds.height / target
                 let rect = CGRect(x: point.x - w/2, y: point.y - h/2, width: w, height: h)
@@ -249,13 +199,9 @@ struct ZoomableImage: UIViewRepresentable {
             scrollView.contentInset = inset
         }
         
-//        func scrollViewDidEndZooming(_ scrollView: UIScrollView, with view: UIView?, atScale scale: CGFloat) {
-//            centerOrTopAlign(scroll: scrollView)
-//        }
-        
         func centerOrTopAlign(scroll: UIScrollView) {
             let bounds = scroll.bounds.size
-            let base   = scroll.bounds.size
+            let base   = imageView.bounds.size
             
             let contentW = base.width  * scroll.zoomScale
             let contentH = base.height * scroll.zoomScale
@@ -269,7 +215,6 @@ struct ZoomableImage: UIViewRepresentable {
             scroll.contentInset = inset
             scroll.scrollIndicatorInsets = inset
             
-            // **핵심: 오프셋도 인셋에 맞춰 보정**
             let target = CGPoint(x: -inset.left, y: -inset.top)
             if scroll.contentOffset != target {
                 scroll.setContentOffset(target, animated: false)
