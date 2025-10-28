@@ -10,6 +10,7 @@ import UIKit
 
 struct ZoomableImage: UIViewRepresentable {
     let image: UIImage
+    let containerSize: CGSize
     let topAligned: Bool = false
     
     func makeCoordinator() -> Coordinator {
@@ -150,8 +151,8 @@ struct ZoomableImage: UIViewRepresentable {
             let newMin = (xScale > yScale) ? yScale : xScale
             let newMax = 2.0
             let viewZoom = (xScale > yScale2) ? yScale2 : xScale
-            print("testLog bounds \(bounds), base \(base)")
-            print("testLog min \(newMin), max \(newMax), view \(viewZoom)")
+//            print("testLog bounds \(bounds), base \(base)")
+//            print("testLog min \(newMin), max \(newMax), view \(viewZoom)")
             
             scroll.minimumZoomScale = newMin
             scroll.maximumZoomScale = newMax

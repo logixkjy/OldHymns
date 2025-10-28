@@ -57,7 +57,7 @@ final class InterstitialAdManager: NSObject, ObservableObject, FullScreenContent
         do {
             interstitial = try await InterstitialAd.load(with: adUnitID, request: Request())
             interstitial?.fullScreenContentDelegate = self
-            print("interstitial has loaded")
+//            print("interstitial has loaded")
             comp()
         } catch {
             print( "interstitial Failed to load \(error)")
@@ -73,7 +73,7 @@ final class InterstitialAdManager: NSObject, ObservableObject, FullScreenContent
      }
     
     func adDidDismissFullScreenContent(_ ad: FullScreenPresentingAd) {
-        print("interstitial Dismissed loading next")
+//        print("interstitial Dismissed loading next")
         self.interstitial = nil
         Task {
             await load(comp: {})
@@ -89,19 +89,19 @@ final class InterstitialAdManager: NSObject, ObservableObject, FullScreenContent
     }
     
     func adDidRecordImpression(_ ad: FullScreenPresentingAd) {
-      print("interstitial \(#function) called")
+//      print("interstitial \(#function) called")
     }
 
     func adDidRecordClick(_ ad: FullScreenPresentingAd) {
-      print("interstitial \(#function) called")
+//      print("interstitial \(#function) called")
     }
     
     func adWillPresentFullScreenContent(_ ad: FullScreenPresentingAd) {
-      print("interstitial \(#function) called")
+//      print("interstitial \(#function) called")
     }
 
     func adWillDismissFullScreenContent(_ ad: FullScreenPresentingAd) {
-      print("interstitial \(#function) called")
+//      print("interstitial \(#function) called")
     }
 }
 

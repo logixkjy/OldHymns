@@ -86,7 +86,7 @@ actor AudioEngine {
                 let p = try AVAudioPlayer(data: data)
                 p.prepareToPlay()
                 self.player = p
-                print("audio log preload player load!!! \(self.player == nil ? "nil" : "ok")")
+//                print("audio log preload player load!!! \(self.player == nil ? "nil" : "ok")")
                 return true
             } catch {
                 continue
@@ -94,7 +94,7 @@ actor AudioEngine {
         }
         
         self.player = nil
-        print("audio log preload player nil!!!")
+//        print("audio log preload player nil!!!")
         return false
     }
     

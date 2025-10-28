@@ -30,7 +30,7 @@ struct FixedBannerView: UIViewRepresentable {
     
     final class Coordinator: NSObject, BannerViewDelegate {
         func bannerViewDidReceiveAd(_ bannerView: BannerView) {
-            print("✅ FixedBannerView: banner loaded")
+//            print("✅ FixedBannerView: banner loaded")
         }
         func bannerView(_ bannerView: BannerView, didFailToReceiveAdWithError error: any Error) {
             print("❌ FixedBannerView: failed - \(error.localizedDescription)")

@@ -47,7 +47,7 @@ struct ReadingsDetailView: View {
                     // 하단 슬라이더 바 (고정)
                     HStack(spacing: 12) {
                         Image(systemName: "textformat.size.smaller")
-                        Slider(value: $storedFontSize, in: 12...30, step: 1)
+                        Slider(value: $storedFontSize, in: 12...60, step: 1)
                         Image(systemName: "textformat.size.larger")
                         Text("\(Int(storedFontSize))pt")
                             .font(.caption)

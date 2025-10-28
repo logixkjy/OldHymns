@@ -13,6 +13,9 @@ enum AppTheme {
     static var primary: Color {
         Color("AppPrimary", bundle: .main)
     }
+    static var background: Color {
+        Color("background", bundle: .main)
+    }
     
     /// 버튼/칩 등 반투명 배경에 얹을 때
     static var primaryTranslucent: Color { primary.opacity(0.12) }

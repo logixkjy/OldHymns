@@ -29,7 +29,7 @@ private struct InnerBannerView: UIViewRepresentable {
 
     func makeUIView(context: Context) -> BannerView {
         let initialSize = AdSizeBanner
-        print("rotation Log width \(width)  adSize(\(initialSize))")
+//        print("rotation Log width \(width)  adSize(\(initialSize))")
         let banner = BannerView(adSize: initialSize)
         banner.adUnitID = adUnitID
         banner.delegate = context.coordinator
@@ -40,7 +40,7 @@ private struct InnerBannerView: UIViewRepresentable {
 
     func updateUIView(_ view: BannerView, context: Context) {
         let newSize = AdSizeBanner
-        print("rotation Log width \(width)  newSize(\(newSize))")
+//        print("rotation Log width \(width)  newSize(\(newSize))")
         if !CGSizeEqualToSize(view.adSize.size, newSize.size) {
             view.adSize = newSize
             view.load(Request())
@@ -52,53 +52,13 @@ private struct InnerBannerView: UIViewRepresentable {
 
     final class Coordinator: NSObject, BannerViewDelegate {
         func bannerViewDidReceiveAd(_ bannerView: BannerView) {
-             print("rotation Log ✅ Banner Loaded: \(bannerView.adSize.size)")
+//             print("rotation Log ✅ Banner Loaded: \(bannerView.adSize.size)")
         }
         func bannerView(_ bannerView: BannerView, didFailToReceiveAdWithError error: any Error) {
             print("rotation Log ❌ Banner Failed: \(error.localizedDescription)")
         }
     }
 }
-
-//struct BannerAdView: UIViewRepresentable {
-//    let adUnitID: String = "ca-app-pub-2746869735313650/2526983323"
-//    
-//    func makeUIView(context: Context) -> BannerView {
-//        let adSize = AdSizeBanner
-//        let adSize2 = currentOrientationAnchoredAdaptiveBanner(width: UIScreen.main.bounds.width)
-//        print("rotation Lof adSize(\(adSize), (\(adSize2)")
-//        let banner = BannerView(adSize: adSize)
-//        
-//        banner.adUnitID = adUnitID
-//        banner.delegate = context.coordinator
-//        banner.rootViewController = UIApplication.shared.firstKeyWindowRootViewController()
-//        banner.load(Request())
-//        return banner
-//    }
-//    func updateUIView(_ uiView: BannerView, context: Context) {
-////        let newWidth = UIScreen.main.bounds.width
-////        let newSize = currentOrientationAnchoredAdaptiveBanner(width: newWidth)
-////        if !CGSizeEqualToSize(uiView.adSize.size, newSize.size) {
-////            uiView.adSize = newSize
-////            uiView.load(Request())
-////            print("🔄 Reload banner after orientation change (\(newSize.size.width)x\(newSize.size.height))")
-////        }
-//    }
-//    
-//    func makeCoordinator() -> Coordinator {
-//        Coordinator()
-//    }
-//    
-//    final class Coordinator: NSObject, BannerViewDelegate {
-//        func bannerViewDidReceiveAd( _ banner: BannerView) {
-//            print("Banner Loaded")
-//        }
-//        func bannerView(_ bannerView: BannerView, didFailToReceiveAdWithError error: any Error) {
-//            print("Banner Failed \(error.localizedDescription)")
-//        }
-//    }
-//}
-
 
 
 private extension UIApplication {

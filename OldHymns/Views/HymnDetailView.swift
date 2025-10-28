@@ -43,13 +43,10 @@ struct HymnDetailView: View {
                         ZStack {
                             // 악보(줌)
                             if let img = vs.scoreImage {
-                                ZoomableImage(image: img)
-                                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-                                
-//                                GeometryReader { geo in
-//                                    ZoomableImageView(image: img, maxZoomScale: vs.maxZoom)
-//                                        .frame(width: geo.size.width, height: geo.size.height)
-//                                }
+                                GeometryReader { geo in
+                                    ZoomableImage(image: img, containerSize: geo.size)
+                                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                                }
                             } else {
                                 VStack { Spacer(); Text("악보 이미지가 없습니다.").foregroundStyle(.secondary); Spacer() }
                             }
@@ -110,7 +107,7 @@ struct HymnDetailView: View {
                     if vs.mode == .lyrics {
                         HStack(spacing: 10) {
                             Image(systemName: "textformat.size.smaller")
-                            Slider(value: $fontSize, in: 12...30, step: 1)
+                            Slider(value: $fontSize, in: 12...60, step: 1)
                             Image(systemName: "textformat.size.larger")
                             Text("\(Int(fontSize))pt").font(.caption).foregroundStyle(.secondary)
                         }

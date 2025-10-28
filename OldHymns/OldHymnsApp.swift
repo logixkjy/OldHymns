@@ -13,6 +13,7 @@ import GoogleMobileAds
 struct OldHymnsApp: App {
     // AppDelegate를 SwiftUI에서 사용하기 위한 설정
     @UIApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
+    @Environment(\.scenePhase) private var scenePhase
     private var adManager = AppOpenAdManager.shared
     
     var body: some Scene {
@@ -191,7 +192,7 @@ struct OldHymnsApp: App {
                     dep.readingRepo = ReadingRepository(
                         search: { q in
                             let query = q.trimmingCharacters(in: .whitespacesAndNewlines)
-                            print("query = \(query)")
+//                            print("query = \(query)")
                             // 2) 초성: 전적으로 클라이언트에서 매칭 (LIKE 선필터로 누락되는 문제 방지)
                             if KoreanSearch.isInitialsQuery(query) {
                                 let rows = try hymnDB.query("""
@@ -385,6 +386,11 @@ struct OldHymnsApp: App {
                     )
                 }
             )
+        }
+        .onChange(of: scenePhase) { _, newPhase in
+            if newPhase == .active {
+                AttAuthentication.requestIfNeeded()
+            }
         }
     }
     

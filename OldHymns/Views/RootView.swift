@@ -43,13 +43,13 @@ struct RootView: View {
                     .onChange(of: scenePhase) { newPhase in
                         switch newPhase {
                         case .active:
-                            print("AppOpenAd did become active.")
-//                            AppOpenAdManager.shared.showAdIfAvailable()
+//                            print("AppOpenAd did become active.")
+                            AppOpenAdManager.shared.showAdIfAvailable()
                         case .background:
-                            print("AppOpenAd moved to background. Pre-loading next ad...")
-//                            Task {
-//                                await AppOpenAdManager.shared.loadAd()
-//                            }
+//                            print("AppOpenAd moved to background. Pre-loading next ad...")
+                            Task {
+                                await AppOpenAdManager.shared.loadAd()
+                            }
                             break
                         case .inactive:
                             break

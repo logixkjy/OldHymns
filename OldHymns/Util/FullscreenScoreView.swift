@@ -37,7 +37,7 @@ struct FullscreenScoreView: View {
                     // 악보
                     if let img = image {
                         GeometryReader { geo in
-                            ZoomableImageView(image: img, maxZoomScale: maxScale)
+                            ZoomableImage(image: img, containerSize: geo.size)
                                 .frame(width: geo.size.width, height: geo.size.height)
                         }
                     } else {

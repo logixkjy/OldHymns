@@ -26,9 +26,9 @@ struct HistoryView: View {
             }
             .onAppear {
                 vs.send(.onAppear)
-//                if InterstitialAdManager.shared.recordEventAndCheckShow() {
-//                    InterstitialAdManager.shared.showIfAvailable()
-//                }
+                if InterstitialAdManager.shared.recordEventAndCheckShow() {
+                    InterstitialAdManager.shared.showIfAvailable()
+                }
             }
             .refreshable { vs.send(.refresh) }
         }
