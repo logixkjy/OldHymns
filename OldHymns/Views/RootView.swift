@@ -126,7 +126,7 @@ private struct ContentHost: View {
                 }
             case .tenCommandments:
                 NavWrapped(title: "십계명", mode: .main(onMenu: onTapMenu)) {
-                    StaticPageView(store: tenCommandments)
+                    StaticPageHTMLView(store: tenCommandments)
                 }
             case .settings:
                 NavWrapped(title: "설정", mode: .main(onMenu: onTapMenu)) {

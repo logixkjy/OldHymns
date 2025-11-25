@@ -24,16 +24,6 @@ struct ReadingsDetailView: View {
                 )
                 
                 VStack(spacing: 0) {
-                    // 헤더
-//                    HStack {
-//                        Text("\(vs.reading.number)  \(vs.reading.title)")
-//                            .font(.headline)
-//                            .frame(maxWidth: .infinity, alignment: .leading)
-//                        Spacer()
-//                    }
-//                    .padding(.horizontal, 16)
-//                    .padding(.top, 12)
-                    
                     // 본문: 웹뷰가 나머지 공간을 모두 차지하도록
                     GeometryReader { geo in
                         WithPerceptionTracking {           // ✅ escaping 클로저 내부도 추적

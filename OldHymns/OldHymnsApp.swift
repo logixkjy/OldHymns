@@ -23,7 +23,7 @@ struct OldHymnsApp: App {
                     RootFeature()
                 } withDependencies: { dep in
                     // 1) hymn.db / bookmark.db 열기
-                    let hymnPath = try! BundleDBCopier.installIfNeeded(dbFileName: "hymn.db")
+                    let hymnPath = try! BundleDBCopier.installIfNeeded(dbFileName: "hymn.db", dbVersion: 1)
                     let hymnDB = FMDBDBClient.live()
                     try? hymnDB.open(hymnPath)
                     
@@ -248,24 +248,29 @@ struct OldHymnsApp: App {
                                     )
                                 }
                             }
-                            
-                            // 3) 일반 텍스트: title/words LIKE
-                            let like = "%\(query)%"
-                            let rows = try hymnDB.query("""
+                            do {
+                                // 3) 일반 텍스트: title/words LIKE
+                                let like = "%\(query)%"
+                                let queryString = """
                         SELECT number, title, words 
                         FROM \(readingTable)
                           WHERE title LIKE ? OR words LIKE ?
                           ORDER BY number
-                        """, [like, like])
-                            
-                            return rows.map { r in
-                                let num = (r.columns["NUMBER"] as! NSNumber).intValue
-                                return Reading(
-                                    number: num,
-                                    title:  r.columns["TITLE"] as! String,
-                                    words:  r.columns["WORDS"] as! String
-                                )
+                        """
+                                let rows = try hymnDB.query(queryString, [like, like])
+                                
+                                return rows.map { r in
+                                    let num = (r.columns["NUMBER"] as! NSNumber).intValue
+                                    return Reading(
+                                        number: num,
+                                        title:  r.columns["TITLE"] as! String,
+                                        words:  r.columns["WORDS"] as! String
+                                    )
+                                }
+                            } catch {
+                                print("error executing query: \(error)")
                             }
+                            return []
                         },
                         byNumber: { n in
                             try hymnDB.query("""
